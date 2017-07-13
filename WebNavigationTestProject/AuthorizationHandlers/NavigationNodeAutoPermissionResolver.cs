@@ -24,9 +24,10 @@ namespace WebNavigationTestProject.AuthorizationHandlers
             // if the AuthorizationHandler examines the AuthorizationFilterContext for RouteData
             // usually the filter would assume the route is applicable to the action it is adorning
             // however this will be an invalid assumption. Therefore it may be worth setting the
-            // RouteData property of the ActionContext to a new (empty) instance. However it may be 
+            // RouteData property of the ActionContext to a new (empty) RouteData instance. However it may be 
             // very usefull if, for instance if a 'DepartmentId' value in the RouteData were compared with 
-            // a user claim for 'DepartmentId'. 
+            // a user claim for 'DepartmentId'. if the property is 'Id' refering to different tables in 
+            // different controllers, and the IDs are not GUIDs, this could be problematic
             _actionContext = new ActionContext(actionContextAccessor.ActionContext);
             _filterMap = filterMap;
             _logger = logger;

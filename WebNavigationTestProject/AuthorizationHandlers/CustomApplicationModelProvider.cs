@@ -69,13 +69,6 @@ namespace WebNavigationTestProject.AuthorizationHandlers
         {
             public ActionKey(string area, string controller, string action) : base(area ?? string.Empty, controller, action)
             {
-                _hashCode = base.GetHashCode();
-            }
-            
-            int _hashCode;
-            public override int GetHashCode()
-            {
-                return _hashCode;
             }
         }
     }
