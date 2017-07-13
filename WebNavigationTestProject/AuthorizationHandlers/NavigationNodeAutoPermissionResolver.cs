@@ -62,7 +62,7 @@ namespace WebNavigationTestProject.AuthorizationHandlers
             return _httpContext.User.IsInRoles(menuNode.Value.ViewRoles);
         }
 
-        private async Task<bool> IsValid(IEnumerable<IAsyncAuthorizationFilter> filters, ActionContext actionContext)
+        private static async Task<bool> IsValid(IEnumerable<IAsyncAuthorizationFilter> filters, ActionContext actionContext)
         {
             var context = new AuthorizationFilterContext(actionContext, filters.Cast<IFilterMetadata>().ToList());
             foreach (var f in filters)
