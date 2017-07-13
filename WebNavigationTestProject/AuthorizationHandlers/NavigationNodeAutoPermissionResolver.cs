@@ -38,11 +38,19 @@ namespace WebNavigationTestProject.AuthorizationHandlers
         private IActionFilterMap _filterMap;
         private ILogger _logger;
 
-        public const string AllUsers = "*"; //note  - shouldn't this is "AllUsers;" in the default implementation
+        public const string AllUsers = "*"; //note - this is "AllUsers;" in the default implementation
 
         public virtual bool ShouldAllowView(TreeNode<NavigationNode> menuNode)
         {
             if (string.IsNullOrEmpty(menuNode.Value.ViewRoles)) {
+                if (!string.IsNullOrEmpty(menuNode.Value.Url)) {
+                    return true; //if a url is provided, it will be to an address outside our MVC routing
+                } 
+                if (!string.IsNullOrEmpty(menuNode.Value.NamedRoute)) {
+                    //this could be implemented, but as I never use named routes, belongs to someone else B.M.
+                    throw new NotImplementedException("The current implementation does not have a dictionary of named routes");
+                }
+
                 var authFilters = _filterMap.GetFilters(menuNode.Value.Area, menuNode.Value.Controller, menuNode.Value.Action);
                 if (authFilters == null)
                 {
