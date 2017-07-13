@@ -47,8 +47,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                     return true; //if a url is provided, it will be to an address outside our MVC routing
                 } 
                 if (!string.IsNullOrEmpty(menuNode.Value.NamedRoute)) {
-                    //this could be implemented, but as I never use named routes, belongs to someone else B.M.
-                    throw new NotImplementedException("The current implementation does not have a dictionary of named routes");
+                    //this could be implemented, but as I never use named routes, feel free to implement yourself
+                    throw new NotImplementedException("The current implementation does not know which named routes map to which actions");
                 }
 
                 var authFilters = _filterMap.GetFilters(menuNode.Value.Area, menuNode.Value.Controller, menuNode.Value.Action);
