@@ -42,15 +42,17 @@ namespace WebNavigationTestProject.AuthorizationHandlers
 
         public virtual bool ShouldAllowView(TreeNode<NavigationNode> menuNode)
         {
-            if (string.IsNullOrEmpty(menuNode.Value.ViewRoles)) {
-                if (!string.IsNullOrEmpty(menuNode.Value.Url)) {
-                    return true; //if a url is provided, it will be to an address outside our MVC routing
-                } 
-                if (!string.IsNullOrEmpty(menuNode.Value.NamedRoute)) {
-                    //this could be implemented, but as I never use named routes, belongs to someone else B.M.
-                    throw new NotImplementedException("The current implementation does not have a dictionary of named routes");
+            if (menuNode.Value.ViewRoles.Length == 0) {
+                if (menuNode.Value.NamedRoute.Length > 0)
+                {
+                    //this could be implemented, but as I never use named routes, feel free to implement yourself
+                    throw new NotImplementedException("The current implementation does not know which named routes map to which actions");
                 }
-
+                //if no viewrole attribute and no action attribute a url must have been provided
+                //we could also use something like if (menuNode.Value.Url[0] != '~')
+                if (menuNode.Value.Action.Length == 0) {
+                    return true; 
+                } 
                 var authFilters = _filterMap.GetFilters(menuNode.Value.Area, menuNode.Value.Controller, menuNode.Value.Action);
                 if (authFilters == null)
                 {
