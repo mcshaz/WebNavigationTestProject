@@ -14,9 +14,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
 {
     public class NavigationNodeAutoPermissionResolver : INavigationNodePermissionResolver
     {
-
-        public NavigationNodeAutoPermissionResolver(IHttpContextAccessor httpContextAccessor, 
-            IActionContextAccessor actionContextAccessor, 
+        public NavigationNodeAutoPermissionResolver(IHttpContextAccessor httpContextAccessor,
+            IActionContextAccessor actionContextAccessor,
             IActionFilterMap filterMap,
             ILogger<NavigationNodeAutoPermissionResolver> logger)
         {
@@ -32,7 +31,7 @@ namespace WebNavigationTestProject.AuthorizationHandlers
             _filterMap = filterMap.GetNewFilterDictionary();
             _logger = logger;
         }
-        
+
         private HttpContext _httpContext;
         private ActionContext _actionContext;
         private IDictionary<ControllerActionNameKey, List<PerRequestFilter>> _filterMap;
@@ -42,7 +41,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
 
         public virtual bool ShouldAllowView(TreeNode<NavigationNode> menuNode)
         {
-            if (menuNode.Value.ViewRoles.Length == 0) {
+            if (menuNode.Value.ViewRoles.Length == 0)
+            {
                 if (menuNode.Value.NamedRoute.Length > 0)
                 {
                     //this could be implemented, but as I never use named routes, feel free to implement yourself
@@ -50,19 +50,20 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                 }
                 //if no NamedRoute attribute and no action attribute a url must have been provided
                 //we could also use something like if (menuNode.Value.Url[0] != '~')
-                if (menuNode.Value.Action.Length == 0) {
-                    return true; 
-                } 
+                if (menuNode.Value.Action.Length == 0)
+                {
+                    return true;
+                }
                 if (!_filterMap.TryGetValue(new ControllerActionNameKey(menuNode.Value.Area, menuNode.Value.Controller, menuNode.Value.Action), out List<PerRequestFilter> authFilters))
                 {
                     _logger.LogWarning($"could not find area:'{menuNode.Value.Area}'/controller:'{menuNode.Value.Controller}'/action:'{menuNode.Value.Action}'");
                     return true;
                 }
-                else if(authFilters.Any(af=>af.Authorized == false))
+                if (authFilters.Any(af => af.Authorized == false))
                 {
                     return false;
                 }
-                else if(authFilters.All(af=>af.Authorized == true))
+                if (authFilters.All(af => af.Authorized == true))
                 {
                     return true;
                 }
@@ -75,7 +76,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
 
         private static async Task<bool> IsValid(IEnumerable<PerRequestFilter> filters, ActionContext actionContext)
         {
-            var context = new AuthorizationFilterContext(actionContext, filters.Select(f=>(IFilterMetadata)f.Filter).ToList());
+            var context = new AuthorizationFilterContext(actionContext, filters.Select(f => (IFilterMetadata)f.Filter).ToList());
+
             foreach (var f in filters)
             {
                 await f.Filter.OnAuthorizationAsync(context);
