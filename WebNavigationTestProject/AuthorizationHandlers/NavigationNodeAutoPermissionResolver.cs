@@ -48,7 +48,7 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                     //this could be implemented, but as I never use named routes, feel free to implement yourself
                     throw new NotImplementedException("The current implementation does not know which named routes map to which actions");
                 }
-                //if no viewrole attribute and no action attribute a url must have been provided
+                //if no NamedRoute attribute and no action attribute a url must have been provided
                 //we could also use something like if (menuNode.Value.Url[0] != '~')
                 if (menuNode.Value.Action.Length == 0) {
                     return true; 
