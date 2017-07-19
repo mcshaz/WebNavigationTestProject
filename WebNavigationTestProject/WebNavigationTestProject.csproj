@@ -7,6 +7,12 @@
   <PropertyGroup>
     <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8+wp8+wpa81;</PackageTargetFallback>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AuthorizationHandlers\BidirectionalManyDictionary - Copy.cs" />
+    <Compile Remove="AuthorizationHandlers\IAsyncAuthorizationFilterEqualityProvider.cs" />
+    <Compile Remove="AuthorizationHandlers\LookupDistinct.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="cloudscribe.Web.Navigation" Version="1.2.5" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.1.1" />

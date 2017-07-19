@@ -54,7 +54,7 @@ namespace WebNavigationTestProject.Controllers
 
             return View("Contact");
         }
-
+        [Authorize(Roles = "Admins")]
         public IActionResult HideAnon()
         {
             ViewData["Message"] = "Your contact page.";

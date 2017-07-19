@@ -28,7 +28,6 @@ namespace WebNavigationTestProject.Areas.Area51.Controllers
         {
             return View();
         }
-
         public IActionResult MenInBlack()
         {
             return View();
