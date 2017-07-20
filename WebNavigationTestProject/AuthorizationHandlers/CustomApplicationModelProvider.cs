@@ -101,7 +101,7 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                         var ra = r as RolesAuthorizationRequirement;
                         if (r is RolesAuthorizationRequirement rar)
                         {
-                            if (_authorizedRoleNames != null)
+                            if (_authorizedRoleNames.Count > 0)
                             {
                                 throw new NotImplementedException("Expected Policy.Requirements to contain only a single RolesAuthorizationRequirement within the collection.");
                             }
