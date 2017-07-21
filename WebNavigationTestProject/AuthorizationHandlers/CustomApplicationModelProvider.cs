@@ -85,14 +85,17 @@ namespace WebNavigationTestProject.AuthorizationHandlers
             }
             return returnVar;
         }
-
+        /// <summary>
+        /// Private class to help using IAsyncAuthorizationFilters within a hashset
+        /// A custom IEqualityComparer could also work, but as the GetHashCode and the Equals method both require itterating through
+        /// and casting elements of the Policy Requirements, recalculating this every time would likely be less performant
+        /// </summary>
         private class AuthFilterWrapper
         {
             public AuthFilterWrapper(IAsyncAuthorizationFilter filter)
             {
                 Filter = filter;
-                var af = filter as AuthorizeFilter;
-                if (af != null)
+                if (filter is AuthorizeFilter af)
                 {
                     _authorizedRoleNames = new List<string>();
                     _others = new List<IAuthorizationRequirement>(af.Policy.Requirements.Count);
@@ -103,9 +106,9 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                         {
                             if (_authorizedRoleNames.Count > 0)
                             {
-                                throw new NotImplementedException("Expected Policy.Requirements to contain only a single RolesAuthorizationRequirement within the collection.");
+                                throw new NotSupportedException("Expected Policy.Requirements to contain only a single RolesAuthorizationRequirement within the collection.");
                             }
-                            _authorizedRoleNames = rar.AllowedRoles.ToList();
+                            _authorizedRoleNames.AddRange(rar.AllowedRoles);
                         }
                         else
                         {
@@ -118,6 +121,9 @@ namespace WebNavigationTestProject.AuthorizationHandlers
             public List<string> _authorizedRoleNames;
             public List<IAuthorizationRequirement> _others;
 
+            ///not a true equals - more 'equivalent' - if Filters are the same object return true, otherwise check if the 2 filters
+            ///in any order, contain the same IAuthorizationRequirements. If contains RolesAuthorizationRequirement, is the
+            ///allowed roles string collection equivalent (regardless of order) - that is if the same roles are authorized, the filter is 'equal'
             public override bool Equals(object obj)
             {
                 var compareTo = obj as AuthFilterWrapper;
@@ -125,8 +131,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                 bool filtersEqual = Filter.Equals(compareTo.Filter);
                 if (_others == null || filtersEqual) { return filtersEqual; }
 
-                return ListEquivalentComparer.Equals(_authorizedRoleNames, compareTo._authorizedRoleNames)
-                    && ListEquivalentComparer.Equals(_others, compareTo._others);
+                return ListEquivalentComparer<string>.Equals(_authorizedRoleNames, compareTo._authorizedRoleNames)
+                    && ListEquivalentComparer<IAuthorizationRequirement>.Equals(_others, compareTo._others);
             }
 
             public override int GetHashCode()
@@ -135,8 +141,8 @@ namespace WebNavigationTestProject.AuthorizationHandlers
                 {
                     return Filter.GetHashCode();
                 }
-                return ListEquivalentComparer.GetHashCode(_authorizedRoleNames)
-                    ^ ListEquivalentComparer.GetHashCode(_others);
+                return ListEquivalentComparer<string>.GetHashCode(_authorizedRoleNames)
+                    ^ ListEquivalentComparer<IAuthorizationRequirement>.GetHashCode(_others);
             }
         }
     }
