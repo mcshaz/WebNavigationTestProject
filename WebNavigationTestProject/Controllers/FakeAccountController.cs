@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authentication;
 
 namespace WebNavigationTestProject.Controllers
 {
@@ -51,7 +50,7 @@ namespace WebNavigationTestProject.Controllers
                     user = GetMemberClaimsPrincipal();
                     break;
             }
-            await HttpContext.Authentication.SignInAsync("application", user, authProperties);
+            await HttpContext.SignInAsync("application", user, authProperties);
 
             return RedirectToAction(nameof(HomeController.Index), "Home");
 
@@ -98,7 +97,7 @@ namespace WebNavigationTestProject.Controllers
         public async Task<IActionResult> LogOff()
         {
             //await _signInManager.SignOutAsync();
-            await HttpContext.Authentication.SignOutAsync("application");
+            await HttpContext.SignOutAsync("application");
 
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }

@@ -3,37 +3,34 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc;
 using cloudscribe.Web.Navigation;
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Authorization;
-using WebNavigationTestProject.AuthorizationHandlers;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Globalization;
 using Microsoft.AspNetCore.Mvc.Razor;
+using System.Globalization;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using WebNavigationTestProject.AuthorizationHandlers;
+using Microsoft.AspNetCore.Authorization;
+using cloudscribe.Web.SiteMap;
 
 namespace WebNavigationTestProject
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
-                .AddEnvironmentVariables();
-            Configuration = builder.Build();
+            Configuration = configuration;
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //create a single instance and have the same instance injected into both interfaces it implements
+            services.AddScoped<ISiteMapNodeService, NavigationTreeSiteMapNodeService>();
+
             var customAppModelProvider = new CustomApplicationModelProvider();
             services.AddSingleton<IApplicationModelProvider>(customAppModelProvider);
             services.AddSingleton<IActionFilterMap>(customAppModelProvider);
@@ -41,7 +38,24 @@ namespace WebNavigationTestProject
             services.AddScoped<INavigationNodePermissionResolver, NavigationNodeAutoPermissionResolver>();
             services.AddCloudscribeNavigation(Configuration.GetSection("NavigationOptions"));
 
-            // Add framework services.
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+            services.AddRouting(options =>
+            {
+                options.LowercaseUrls = true;
+            });
+
+            services.Configure<MvcOptions>(options =>
+            {
+                // options.InputFormatters.Add(new Xm)
+                options.CacheProfiles.Add("SiteMapCacheProfile",
+                     new CacheProfile
+                     {
+                         Duration = 100
+                     });
+
+            });
+
             services.AddMvc()
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization()
@@ -53,25 +67,23 @@ namespace WebNavigationTestProject
                     // https://github.com/joeaudette/cloudscribe.Web.Navigation/tree/master/src/cloudscribe.Web.Navigation/Views
                     options.AddCloudscribeNavigationBootstrap3Views();
                 });
-            
-            services.AddAuthorization(options =>
+
+            services.AddAuthentication(options =>
             {
-                options.AddPolicy("Over21",
-                                    policy => policy.Requirements.Add(new MinimumAgeRequirement(21)));
+                options.DefaultAuthenticateScheme = "application";
+                options.DefaultChallengeScheme = "application";
+            })
+                .AddCookie("application", options =>
+                {
+                    options.LoginPath = new PathString("/FakeAccount/Index");
 
-                options.AddPolicy("EmployeesOnly", policy => policy.RequireClaim("EmployeeId"));
-            });
-
-            services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
+                });
 
             services.Configure<RequestLocalizationOptions>(options =>
             {
                 var supportedCultures = new[]
                 {
                      new CultureInfo("en-US"),
-                     new CultureInfo("en-GB"),
-                     new CultureInfo("en-AU"),
-                     new CultureInfo("en-NZ"),
                      new CultureInfo("es-ES"),
                      new CultureInfo("fr-FR"),
                      new CultureInfo("de-DE"),
@@ -105,47 +117,67 @@ namespace WebNavigationTestProject
                 //  return new ProviderCultureResult("en");
                 //}));
             });
+
+            services.AddAuthorization(options =>
+            {
+
+                options.AddPolicy(
+                    "AdminsPolicy",
+                    authBuilder =>
+                    {
+                        authBuilder.RequireRole("Admins");
+                    });
+
+                options.AddPolicy(
+                    "MembersPolicy",
+                    authBuilder =>
+                    {
+                        authBuilder.RequireRole("Admins", "Members");
+                    });
+
+                options.AddPolicy("Over21",
+                    policy => policy.Requirements.Add(new MinimumAgeRequirement(21)));
+
+                options.AddPolicy("EmployeesOnly", policy => policy.RequireClaim("EmployeeId"));
+
+            });
+
+            services.AddSingleton<IAuthorizationHandler, MinimumAgeHandler>();
+
+
         }
+
+
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
-            loggerFactory.AddDebug();
 
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseBrowserLink();
+
             }
             else
             {
                 app.UseExceptionHandler("/Home/Error");
             }
 
+            //https://docs.microsoft.com/en-us/aspnet/core/fundamentals/localization
+            //https://msdn.microsoft.com/en-us/library/ee825488(v=cs.20).aspx
+
             var locOptions = app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>();
             app.UseRequestLocalization(locOptions.Value);
 
             app.UseStaticFiles();
 
-            var ApplicationCookie = new CookieAuthenticationOptions
-            {
-                AuthenticationScheme = "application",
-                CookieName = "application",
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true,
-                LoginPath = new PathString("/FakeAccount/Index"),
-                Events = new CookieAuthenticationEvents
-                {
-                    //OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync
-                }
-            };
-
-            app.UseCookieAuthentication(ApplicationCookie);
+            app.UseAuthentication();
 
             app.UseMvc(routes =>
             {
                 routes.MapRoute("areaRoute", "{area:exists}/{controller=Roswell}/{action=Index}/{id?}");
+
 
                 routes.MapRoute(
                     name: "default",
